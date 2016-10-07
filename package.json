@@ -9,7 +9,7 @@
     "client",
     "API"
   ],
-  "main":"fastango.js",
+  "main": "fastango.js",
   "author": {
     "name": "Manuel Baesler",
     "email": "baslr.at.github@gmail.com"
@@ -22,7 +22,6 @@
     "url": "https://github.com/baslr/fastango3/issues"
   },
   "homepage": "https://github.com/baslr/fastango3",
-
   "engines": {
     "node": ">=6.0.0"
   },
@@ -33,8 +32,8 @@
     }
   ],
   "readmeFilename": "README.md",
-
   "dependencies": {
     "request-easy": "^1.3.2"
-  }
+  },
+  "version": "1.0.0"
 }
