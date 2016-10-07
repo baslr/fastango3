@@ -146,23 +146,6 @@ const fastangoCursor = (url, req, status, body) => {
     }
 };
 
-/*.update  = (_key, str, opts, cb) ->
-        urlStr += "#{i}=#{n}&" for i,n of opts
-        parser.patch this.urls['GET_DOC']+_key+urlStr, new Buffer(str, 'utf8'), cb
-*/
-/*
-
-      obj[colName].urls['POST_DOC']     = "/_db/#{currentDb}/_api/document?collection=#{colName}"
-      obj[colName].urls['TRUNCATE_COL'] = "/_db/#{currentDb}/_api/collection/#{colName}/truncate"
-      obj[colName].urls['DELETE_COL']   = "/_db/#{currentDb}/_api/collection/#{colName}"
-      obj[colName].urls['DOC_COUNT']    = "/_db/#{currentDb}/_api/collection/#{colName}/count"
-
-      ###
-          DOCUMENT OPERATIONS
-      ###
-      obj[colName].save = (str, cb) ->
-        parser.post this.urls['POST_DOC'], new Buffer(str, 'utf8'), cb
-*/
 
 const fastangoStarter = {
         _q(aql, bindVars, opts, callback) {
@@ -178,7 +161,6 @@ const fastangoStarter = {
             const data = {
                 query: aql,
                 bindVars: bindVars || undefined
-//                batchSize: 
             };
 
             if (opts) {
@@ -194,9 +176,7 @@ const fastangoStarter = {
                 };
             } // if
 
-            console.log(data);
-
-            this.req.post({path:'/_db/_system/_api/cursor', buffer:new Buffer(JSON.stringify(data))}, (status, headers, body) => {
+            this.req.post({path:this._cursorUrl, buffer:new Buffer(JSON.stringify(data))}, (status, headers, body) => {
                 const cursor = fastangoCursor(`${this._cursorUrl}/`, this.req, status, body);
                 if (opts && opts.all) {
                     cursor.all(callback);
