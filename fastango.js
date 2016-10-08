@@ -90,13 +90,12 @@ const setupCollection = (fastango, collectionName) => {
 };
 
 const fastangoCursor = (url, req, status, body) => {
-    if (201 === status) {
-        try {
-            body = JSON.parse(body);
-        } catch(e) {
-            body = {code: 500};
-        }
-    } // if
+    try {
+        body = JSON.parse(body);
+    } catch(e) {
+        body   = {code: 500, errorMessage:`Can't parse returned JSON`, error:true};
+        status = 500;
+    }
 
     return {
         _result:  body.result,
@@ -138,9 +137,13 @@ const fastangoCursor = (url, req, status, body) => {
         },
 
         all(callback = () => {}) {
+            if (201 !== status) {
+                return callback(status, [], body);
+            } // if
+
             this._all((status) => {
                 this._idx = this._result.length;
-                callback(status, this._result);
+                callback(status, this._result, body.extra);
             });
         }
     }
