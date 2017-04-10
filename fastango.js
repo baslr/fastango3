@@ -22,6 +22,14 @@ const setupCollection = (fastango, collectionName) => {
             fastango.req.post({path:`${docUrl}${urlStr}`, buffer:Buffer.from(str)}, callback);
         },
 
+        asyncSave(str, opts = {}) {
+            let urlStr = '?';
+            for(const key in opts) {
+                urlStr += `${key}=${opts[key]}&`;
+            } // for
+            return fastango.req.asyncPost({path:`${docUrl}${urlStr}`, buffer:Buffer.from(str)});
+        },
+
         document(key, callback = () => {}) {
             fastango.req.get({path:`${docUrl}/${key}`}, callback);
         },
