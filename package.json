@@ -35,5 +35,5 @@
   "dependencies": {
     "request-easy": "^2.0.2"
   },
-  "version": "3.1.0"
+  "version": "3.1.1"
 }
