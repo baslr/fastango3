@@ -197,9 +197,47 @@ const fastangoStarter = {
             });
         },
 
-        _txn(opts, func, callback) {
-            console.log('fastango._txn');
+        _asyncQ(aql, bindVars, opts) {
+            if (typeof bindVars === 'function') {
+                callback = bindVars;
+                bindVars = undefined;
+            } // if
+            if (typeof opts === 'function') {
+                callback = opts;
+                opts = undefined;
+            } // if
 
+            const data = {
+                query: aql,
+                bindVars: bindVars || undefined
+            };
+
+            if (opts) {
+                data.batchSize = opts.batchSize || undefined;
+                data.ttl =       opts.ttl || undefined;
+                data.count =     opts.count || false;
+
+                data.options = {
+                    profile:   opts.profile || false,
+                    fullCount: opts.fullCount || false,
+                    maxPlans:  opts.maxPlans || undefined,
+                    'optimizer.rules': opts.optimizerRules || undefined
+                };
+            } // if
+
+            return new Promise((resolve) => {
+                this.req.post({path:this._cursorUrl, buffer:new Buffer(JSON.stringify(data))}, (status, headers, body) => {
+                    const cursor = fastangoCursor(`${this._cursorUrl}/`, this.req, status, body);
+                    if (opts && opts.all) {
+                        cursor.all((status, result, extra) => resolve([status, result, extra]));
+                    } else {
+                        resolve([status, cursor]);
+                    }
+                });
+            });
+        },
+
+        _txn(opts, func, callback) {
             if (typeof opts === 'function') {
                 callback = func;
                 func = opts;
@@ -207,6 +245,15 @@ const fastangoStarter = {
             } // if
             opts.action = String(func);
             this.req.post({path: this._txnUrl, buffer:Buffer.from(JSON.stringify(opts))}, callback);
+        },
+
+        _asyncTxn(opts, func) {
+            if (typeof opts === 'function') {
+                func = opts;
+                opts = {collections:{}};
+            } // if
+            opts.action = String(func);
+            return this.req.asyncPost({path: this._txnUrl, buffer:Buffer.from(JSON.stringify(opts))});
         },
     }
 
