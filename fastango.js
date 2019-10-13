@@ -1,8 +1,8 @@
 'use strict';
 
-const url  = require('url');
+const url = require('url');
 
-const http  = require('request-easy').http;
+const http = require('request-easy').http;
 const https = require('request-easy').https;
 
 const setupCollection = (fastango, collectionName) => {
@@ -10,83 +10,91 @@ const setupCollection = (fastango, collectionName) => {
     const colUrl = `/_db/${fastango._currentDb}/_api/collection`;
 
     fastango[collectionName] = {
-        save(str, opts, callback = () => {}) {
+        save(str, opts, callback = () => { }) {
             if (typeof opts == 'function') {
                 callback = opts;
                 opts = {};
             } // if
             let urlStr = '?';
-            for(const key in opts) {
+            for (const key in opts) {
                 urlStr += `${key}=${opts[key]}&`;
             } // for
-            fastango.req.post({path:`${docUrl}${urlStr}`, buffer:Buffer.from(str)}, callback);
+            fastango.req.post({ path: `${docUrl}${urlStr}`, buffer: Buffer.from(str) }, callback);
         },
 
         asyncSave(str, opts = {}) {
             let urlStr = '?';
-            for(const key in opts) {
+            for (const key in opts) {
                 urlStr += `${key}=${opts[key]}&`;
             } // for
-            return fastango.req.asyncPost({path:`${docUrl}${urlStr}`, buffer:Buffer.from(str)});
+            return fastango.req.asyncPost({ path: `${docUrl}${urlStr}`, buffer: Buffer.from(str) });
         },
 
-        document(key, callback = () => {}) {
-            fastango.req.get({path:`${docUrl}/${key}`}, callback);
+        document(key, callback = () => { }) {
+            fastango.req.get({ path: `${docUrl}/${key}` }, callback);
         },
 
-        update(key, str, opts, callback = () => {}) {
+        update(key, str, opts, callback = () => { }) {
             if (typeof opts === 'function') {
                 callback = opts;
                 opts = {};
             } // if
             let urlStr = '?';
-            for(const key in opts) {
+            for (const key in opts) {
                 urlStr += `${key}=${opts[key]}&`;
             } // for
-            fastango.req.patch({path:`${docUrl}/${key}${urlStr}`, buffer:Buffer.from(str)}, callback);
+            fastango.req.patch({ path: `${docUrl}/${key}${urlStr}`, buffer: Buffer.from(str) }, callback);
         },
 
-        replace(key, str, opts, callback = () => {}) {
+        asyncUpdate(key, str, opts = {}) {
+            let urlStr = '?';
+            for (const key in opts) {
+                urlStr += `${key}=${opts[key]}&`;
+            } // for
+            return fastango.req.asyncPatch({ path: `${docUrl}/${key}${urlStr}`, buffer: Buffer.from(str) });
+        },
+
+        replace(key, str, opts, callback = () => { }) {
             if (typeof opts === 'function') {
                 callback = opts;
                 opts = {};
             } // if
             let urlStr = '?';
-            for(const key in opts) {
+            for (const key in opts) {
                 urlStr += `${key}=${opts[key]}&`;
             } // for
-            fastango.req.put({path:`${docUrl}/${key}${urlStr}`, buffer:Buffer.from(str)}, callback);
+            fastango.req.put({ path: `${docUrl}/${key}${urlStr}`, buffer: Buffer.from(str) }, callback);
         },
 
-        remove(key, opts, callback = () => {}) {
+        remove(key, opts, callback = () => { }) {
             if (typeof opts === 'function') {
                 callback = opts;
                 opts = {};
             } // if
             let urlStr = '?';
-            for(const key in opts) {
+            for (const key in opts) {
                 urlStr += `${key}=${opts[key]}&`;
             } // for
-            fastango.req.delete({path:`${docUrl}/${key}${urlStr}`}, callback);
+            fastango.req.delete({ path: `${docUrl}/${key}${urlStr}` }, callback);
         },
 
         /* collection operations */
 
-        create(opts, callback = () => {}) {
-            if(typeof opts === 'function') {
+        create(opts, callback = () => { }) {
+            if (typeof opts === 'function') {
                 callback = opts;
                 opts = {};
             } // if
             opts.name = collectionName;
-            fastango.req.post({path:colUrl, buffer:Buffer.from(JSON.stringify(opts))}, callback);
+            fastango.req.post({ path: colUrl, buffer: Buffer.from(JSON.stringify(opts)) }, callback);
         },
 
-        truncate(callback = () => {}) {
-            fastango.req.put({path:`${colUrl}/${collectionName}/truncate`}, callback);
+        truncate(callback = () => { }) {
+            fastango.req.put({ path: `${colUrl}/${collectionName}/truncate` }, callback);
         },
 
-        drop(callback = () => {}) {
-            fastango.req.delete({path:`${colUrl}/${collectionName}`}, (status, headers, body) => {
+        drop(callback = () => { }) {
+            fastango.req.delete({ path: `${colUrl}/${collectionName}` }, (status, headers, body) => {
                 if (200 === status) {
                     fastango[collectionName] = null;
                     delete fastango[collectionName];
@@ -100,17 +108,17 @@ const setupCollection = (fastango, collectionName) => {
 const fastangoCursor = (url, req, status, body) => {
     try {
         body = JSON.parse(body);
-    } catch(e) {
-        body   = {code: 500, errorMessage:`Can't parse returned JSON`, error:true};
+    } catch (e) {
+        body = { code: 500, errorMessage: `Can't parse returned JSON`, error: true };
         status = 500;
     }
 
     return {
-        _result:  body.result,
+        _result: body.result,
         _hasMore: body.hasMore,
-        _count:   body.count,
-        _id:      body.id,
-        _idx:     0,
+        _count: body.count,
+        _id: body.id,
+        _idx: 0,
 
         _all(callback) {
             this._more((status) => {
@@ -122,18 +130,18 @@ const fastangoCursor = (url, req, status, body) => {
         },
 
         _more(callback) {
-            if (! this._hasMore) {
+            if (!this._hasMore) {
                 return callback(200);
             } // if
 
-            req.put({path:url+this._id}, (status, headers, body) => {
+            req.put({ path: url + this._id }, (status, headers, body) => {
                 if (200 !== status) {
                     return callback(status);
                 } // if
 
                 try {
                     body = JSON.parse(body);
-                } catch(e) {
+                } catch (e) {
                     return callback(500);
                 }
 
@@ -144,7 +152,7 @@ const fastangoCursor = (url, req, status, body) => {
             });
         },
 
-        all(callback = () => {}) {
+        all(callback = () => { }) {
             if (201 !== status) {
                 return callback(status, [], body);
             } // if
@@ -159,103 +167,103 @@ const fastangoCursor = (url, req, status, body) => {
 
 
 const fastangoStarter = {
-        _q(aql, bindVars, opts, callback) {
-            if (typeof bindVars === 'function') {
-                callback = bindVars;
-                bindVars = undefined;
-            } // if
-            if (typeof opts === 'function') {
-                callback = opts;
-                opts = undefined;
-            } // if
+    _q(aql, bindVars, opts, callback) {
+        if (typeof bindVars === 'function') {
+            callback = bindVars;
+            bindVars = undefined;
+        } // if
+        if (typeof opts === 'function') {
+            callback = opts;
+            opts = undefined;
+        } // if
 
-            const data = {
-                query: aql,
-                bindVars: bindVars || undefined
+        const data = {
+            query: aql,
+            bindVars: bindVars || undefined
+        };
+
+        if (opts) {
+            data.batchSize = opts.batchSize || undefined;
+            data.ttl = opts.ttl || undefined;
+            data.count = opts.count || false;
+
+            data.options = {
+                profile: opts.profile || false,
+                fullCount: opts.fullCount || false,
+                maxPlans: opts.maxPlans || undefined,
+                'optimizer.rules': opts.optimizerRules || undefined
             };
+        } // if
 
-            if (opts) {
-                data.batchSize = opts.batchSize || undefined;
-                data.ttl =       opts.ttl || undefined;
-                data.count =     opts.count || false;
+        this.req.post({ path: this._cursorUrl, buffer: new Buffer(JSON.stringify(data)) }, (status, headers, body) => {
+            const cursor = fastangoCursor(`${this._cursorUrl}/`, this.req, status, body);
+            if (opts && opts.all) {
+                cursor.all(callback);
+            } else {
+                callback(status, cursor);
+            }
+        });
+    },
 
-                data.options = {
-                    profile:   opts.profile || false,
-                    fullCount: opts.fullCount || false,
-                    maxPlans:  opts.maxPlans || undefined,
-                    'optimizer.rules': opts.optimizerRules || undefined
-                };
-            } // if
+    _asyncQ(aql, bindVars, opts) {
+        if (typeof bindVars === 'function') {
+            callback = bindVars;
+            bindVars = undefined;
+        } // if
+        if (typeof opts === 'function') {
+            callback = opts;
+            opts = undefined;
+        } // if
 
-            this.req.post({path:this._cursorUrl, buffer:new Buffer(JSON.stringify(data))}, (status, headers, body) => {
+        const data = {
+            query: aql,
+            bindVars: bindVars || undefined
+        };
+
+        if (opts) {
+            data.batchSize = opts.batchSize || undefined;
+            data.ttl = opts.ttl || undefined;
+            data.count = opts.count || false;
+
+            data.options = {
+                profile: opts.profile || false,
+                fullCount: opts.fullCount || false,
+                maxPlans: opts.maxPlans || undefined,
+                'optimizer.rules': opts.optimizerRules || undefined
+            };
+        } // if
+
+        return new Promise((resolve) => {
+            this.req.post({ path: this._cursorUrl, buffer: new Buffer(JSON.stringify(data)) }, (status, headers, body) => {
                 const cursor = fastangoCursor(`${this._cursorUrl}/`, this.req, status, body);
                 if (opts && opts.all) {
-                    cursor.all(callback);
+                    cursor.all((status, result, extra) => resolve([status, result, extra]));
                 } else {
-                    callback(status, cursor);
+                    resolve([status, cursor]);
                 }
             });
-        },
+        });
+    },
 
-        _asyncQ(aql, bindVars, opts) {
-            if (typeof bindVars === 'function') {
-                callback = bindVars;
-                bindVars = undefined;
-            } // if
-            if (typeof opts === 'function') {
-                callback = opts;
-                opts = undefined;
-            } // if
+    _txn(opts, func, callback) {
+        if (typeof opts === 'function') {
+            callback = func;
+            func = opts;
+            opts = {};
+        } // if
+        opts.action = String(func);
+        this.req.post({ path: this._txnUrl, buffer: Buffer.from(JSON.stringify(opts)) }, callback);
+    },
 
-            const data = {
-                query: aql,
-                bindVars: bindVars || undefined
-            };
-
-            if (opts) {
-                data.batchSize = opts.batchSize || undefined;
-                data.ttl =       opts.ttl || undefined;
-                data.count =     opts.count || false;
-
-                data.options = {
-                    profile:   opts.profile || false,
-                    fullCount: opts.fullCount || false,
-                    maxPlans:  opts.maxPlans || undefined,
-                    'optimizer.rules': opts.optimizerRules || undefined
-                };
-            } // if
-
-            return new Promise((resolve) => {
-                this.req.post({path:this._cursorUrl, buffer:new Buffer(JSON.stringify(data))}, (status, headers, body) => {
-                    const cursor = fastangoCursor(`${this._cursorUrl}/`, this.req, status, body);
-                    if (opts && opts.all) {
-                        cursor.all((status, result, extra) => resolve([status, result, extra]));
-                    } else {
-                        resolve([status, cursor]);
-                    }
-                });
-            });
-        },
-
-        _txn(opts, func, callback) {
-            if (typeof opts === 'function') {
-                callback = func;
-                func = opts;
-                opts = {};
-            } // if
-            opts.action = String(func);
-            this.req.post({path: this._txnUrl, buffer:Buffer.from(JSON.stringify(opts))}, callback);
-        },
-
-        _asyncTxn(opts, func) {
-            if (typeof opts === 'function') {
-                func = opts;
-                opts = {collections:{}};
-            } // if
-            opts.action = String(func);
-            return this.req.asyncPost({path: this._txnUrl, buffer:Buffer.from(JSON.stringify(opts))});
-        },
-    }
+    _asyncTxn(opts, func) {
+        if (typeof opts === 'function') {
+            func = opts;
+            opts = { collections: {} };
+        } // if
+        opts.action = String(func);
+        return this.req.asyncPost({ path: this._txnUrl, buffer: Buffer.from(JSON.stringify(opts)) });
+    },
+}
 
 
 // construct new fastango
@@ -263,13 +271,13 @@ module.exports = (conUrl, currentDb = '_system') => {
     conUrl = url.parse(conUrl);
     const fastango = Object.create(fastangoStarter);
     if ('https:' === conUrl.protocol) {
-        fastango.req = new https({hostname:conUrl.hostname, port:conUrl.port, setContentLength:true});
+        fastango.req = new https({ hostname: conUrl.hostname, port: conUrl.port, setContentLength: true });
     } else {
-        fastango.req = new http({hostname:conUrl.hostname, port:conUrl.port, setContentLength:true});
+        fastango.req = new http({ hostname: conUrl.hostname, port: conUrl.port, setContentLength: true });
     }
 
     fastango._currentDb = currentDb;
-    fastango._txnUrl    = `/_db/${fastango._currentDb}/_api/transaction`;
+    fastango._txnUrl = `/_db/${fastango._currentDb}/_api/transaction`;
     fastango._cursorUrl = `/_db/${fastango._currentDb}/_api/cursor`;
 
     return new Proxy(fastango, {
